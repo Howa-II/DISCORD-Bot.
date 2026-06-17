@@ -329,7 +329,11 @@ class CancelButton(discord.ui.Button):
 
 @bot.event
 async def on_ready():
-    await bot.tree.sync()
+    try:
+        synced = await bot.tree.sync()
+        print(f"✅ {len(synced)} commande(s) synchronisée(s) globalement")
+    except Exception as e:
+        print(f"❌ Erreur sync : {e}")
     print(f"✅ Bot connecté : {bot.user} (ID: {bot.user.id})")
     print(f"   {len(LANG_EMOJIS)} langues supportées : {', '.join(LANG_EMOJIS.values())}")
 
@@ -338,4 +342,4 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
-    
+        
