@@ -155,6 +155,7 @@ class TranslateView(discord.ui.View):
 
         try:
             if not has_truth and len(lang_values) == 1:
+                # Translation only
                 target_lang = LANG_EMOJIS[lang_values[0]]
                 source_lang, result_text = process_translation(self.original_text, target_lang, "translate")
 
@@ -164,23 +165,24 @@ class TranslateView(discord.ui.View):
 
                 source_emoji = LANG_TO_EMOJI.get(source_lang, "🏳️")
                 if source_lang == target_lang:
-                    reply = f"{source_emoji} *(Already in {source_lang}.)*\n*(by {translator})*"
+                    reply = f"{source_emoji} *(Already in {source_lang}.)* {translator}"
                 else:
                     reply = f"{source_emoji} {result_text}\n*(translated by {translator})*"
 
             elif has_truth and len(lang_values) == 0:
+                # Back Thought only — no emoji, no magnifier
                 source_lang, result_text = process_translation(self.original_text, None, "truth")
 
                 if source_lang is None:
                     await interaction.edit_original_response(content=f"❌ **Language not registered.**\n**Supported:** {supported_list}")
                     return
 
-                source_emoji = LANG_TO_EMOJI.get(source_lang, "🏳️")
-                reply = f"{source_emoji} 🔎 {result_text}\n*(revealed by {translator})*"
+                reply = f"{result_text}\n*(revealed by {translator})*"
 
             elif has_truth and len(lang_values) == 1:
+                # Back Thought + translation — single Gemini call
                 target_lang = LANG_EMOJIS[lang_values[0]]
-                source_lang, result_text = process_translation(self.original_text, None, "truth")
+                source_lang, truth_text = process_translation(self.original_text, None, "truth")
 
                 if source_lang is None:
                     await interaction.edit_original_response(content=f"❌ **Language not registered.**\n**Supported:** {supported_list}")
@@ -189,10 +191,12 @@ class TranslateView(discord.ui.View):
                 source_emoji = LANG_TO_EMOJI.get(source_lang, "🏳️")
 
                 if source_lang == target_lang:
-                    reply = f"{source_emoji} *(Already in {target_lang}.)* 🔎 {result_text}\n*(revealed by {translator})*"
+                    # Same language: signal it + reveal truth separately
+                    reply = f"{source_emoji} *(Already in {target_lang}.)* {translator}\n{truth_text}\n*(revealed by {translator})*"
                 else:
-                    _, result_text = process_translation(self.original_text, target_lang, "truth")
-                    reply = f"{source_emoji} 🔎 {result_text}\n*(revealed by {translator})*"
+                    # Different language: translate the truth
+                    _, translated_truth = process_translation(truth_text, target_lang, "translate")
+                    reply = f"{source_emoji} {translated_truth}\n*(translated and revealed by {translator})*"
 
             else:
                 await interaction.edit_original_response(content="❌ Invalid combination.")
@@ -244,4 +248,4 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
-            
+        
