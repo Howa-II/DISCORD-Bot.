@@ -100,7 +100,7 @@ class TranslateView(discord.ui.View):
             options.append(discord.SelectOption(label=f"{emoji} {lang}", value=emoji))
 
         select = discord.ui.Select(
-            placeholder="Choose a language or Back Thought...",
+            placeholder="Choose a language or Back Thought",
             min_values=1,
             max_values=2,
             options=options[:25],
@@ -130,7 +130,7 @@ class TranslateView(discord.ui.View):
             display.append(f"{v} {LANG_EMOJIS[v]}")
 
         await interaction.response.edit_message(
-            content=f"## Translater\n**Message:** *{self.original_text[:80]}*\n\n**Selection:** {' + '.join(display)}\n\nConfirm with ✅",
+            content=f"## [ \"TRANSLATER\". ] *\n**Message:** *{self.original_text[:80]}*\n\n**Selection:** {' + '.join(display)}\n\nConfirm with ✅",
             view=self
         )
 
@@ -232,7 +232,7 @@ async def translate_context_menu(interaction: discord.Interaction, message: disc
     )
 
     await interaction.response.send_message(
-        f"## Translater\n**Message:** *{message.content[:80]}{'...' if len(message.content) > 80 else ''}*\n\nChoose a language or Back Thought, then confirm with ✅",
+        f"## [ \"TRANSLATER\". ] *\n**Message:** *{message.content[:80]}{'...' if len(message.content) > 80 else ''}*\n\nChoose a language or Back Thought, then confirm with ✅",
         view=view,
         ephemeral=True
     )
@@ -250,4 +250,3 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
-    
