@@ -147,7 +147,7 @@ class TranslateView(discord.ui.View):
 
         # Row 0: Back Thought
         select_bt = discord.ui.Select(
-            placeholder="🔎 Back Thought",
+            placeholder="Back Thought — Reveal the hidden truth",
             min_values=1,
             max_values=1,
             options=_OPTIONS_BT,
@@ -158,7 +158,7 @@ class TranslateView(discord.ui.View):
 
         # Row 1: Group A
         select_a = discord.ui.Select(
-            placeholder="Group A — American English → Italian",
+            placeholder="Group A",
             min_values=1,
             max_values=1,
             options=_OPTIONS_A,
@@ -169,7 +169,7 @@ class TranslateView(discord.ui.View):
 
         # Row 2: Group B
         select_b = discord.ui.Select(
-            placeholder="Group B — Japanese → Vietnamese",
+            placeholder="Group B",
             min_values=1,
             max_values=1,
             options=_OPTIONS_B,
@@ -195,9 +195,7 @@ class TranslateView(discord.ui.View):
         if interaction.user.id != self.invoker_id:
             await interaction.response.send_message("❌ This panel is not yours.", ephemeral=True)
             return
-        if "TRUTH" in self.selected_values:
-            self.selected_values.remove("TRUTH")
-        else:
+        if "TRUTH" not in self.selected_values:
             self.selected_values = ["TRUTH"] + [v for v in self.selected_values if v != "TRUTH"]
         await interaction.response.edit_message(
             content=f"## [ \"TRANSLATER\". ] *\n**Message:** *{self.original_text[:80]}*\n\n**Selection:** {self._build_display()}\n\nConfirm with ✅",
@@ -333,4 +331,4 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
-                        
+        
