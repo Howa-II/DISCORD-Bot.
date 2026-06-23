@@ -296,8 +296,8 @@ class TranslateView(discord.ui.View):
             # 2nd message public : La traduction juste après
             await self.message_ref.reply(reply)
             
-            # Fermeture du volet privé en modifiant le texte (pas de doublon "Done !")
-            await interaction.edit_original_response(content="✅ Panel Closed")
+            # Remet également le message "Done ! ✅" sur le volet éphémère privé de l'utilisateur
+            await interaction.edit_original_response(content="Done ! ✅")
 
         except Exception as e:
             await self.message_ref.reply(f"❌ Error: {str(e)}")
@@ -342,3 +342,4 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
+            
