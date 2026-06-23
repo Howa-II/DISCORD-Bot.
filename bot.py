@@ -286,7 +286,8 @@ class TranslateView(discord.ui.View):
                     reply = f"{source_emoji} {translated_truth}\nRevealed and Translated by {translator}"
 
             else:
-                await interaction.edit_original_response(content="❌ Invalid combination.")
+                # Updated error message per requirements
+                await interaction.edit_original_response(content="❌ Invalid Combination")
                 return
 
             await self.message_ref.reply(reply)
@@ -307,7 +308,7 @@ class TranslateView(discord.ui.View):
 @bot.tree.context_menu(name="TRANSLATER")
 async def translate_context_menu(interaction: discord.Interaction, message: discord.Message):
     if not message.content.strip():
-        await interaction.response.send_message("Ce Message n'est pas Compatible avec l'Application [ \"TRANSLATER\". ] *", ephemeral=True)
+        await interaction.response.send_message("❌ This Message is not Compatible with the Application [ \"TRANSLATER\". ] *", ephemeral=True)
         return
 
     view = TranslateView(
