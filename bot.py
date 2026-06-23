@@ -236,7 +236,8 @@ class TranslateView(discord.ui.View):
             await interaction.response.send_message("⚠️ Please Select at least one Option first", ephemeral=True)
             return
 
-        await interaction.response.edit_message(content="⏳ Processing...", view=None)
+        # Modification applied here with requested spacing between points
+        await interaction.response.edit_message(content="⏳ Processing . . .", view=None)
         self.stop()
 
         values = self.selected_values
@@ -299,7 +300,7 @@ class TranslateView(discord.ui.View):
         if interaction.user.id != self.invoker_id:
             await interaction.response.send_message("❌ This panel does not belong to you.", ephemeral=True)
             return
-        await interaction.response.edit_message(content="❌ Cancelled.", view=None)
+        await interaction.response.edit_message(content="❌ Cancelled", view=None)
         self.stop()
 
 
