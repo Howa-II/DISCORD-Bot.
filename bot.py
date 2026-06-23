@@ -76,13 +76,8 @@ LANG_TO_EMOJI = {v: k for k, v in LANG_EMOJIS.items()}
 
 _all_langs = list(LANG_EMOJIS.items())
 
-# Select 1: Back Thought only
-_OPTIONS_BT = [discord.SelectOption(label="🔎 Back Thought", value="TRUTH", description="Reveals the hidden truth")]
-
-# Select 2: Group A — American English → Italian (25 langues)
+# Options for Select and Buttons with exact space styling requested
 _OPTIONS_A = [discord.SelectOption(label=f"{e} {l}", value=e) for e, l in _all_langs[:25]]
-
-# Select 3: Group B — Japanese → Vietnamese (25 langues)
 _OPTIONS_B = [discord.SelectOption(label=f"{e} {l}", value=e) for e, l in _all_langs[25:]]
 
 _SELECT_A_KEYS = set(e for e, _ in _all_langs[:25])
@@ -145,16 +140,14 @@ class TranslateView(discord.ui.View):
         self.invoker_id = invoker_id
         self.selected_values = []
 
-        # Row 0: Back Thought
-        select_bt = discord.ui.Select(
-            placeholder="Back Thought — Reveal the hidden truth",
-            min_values=1,
-            max_values=1,
-            options=_OPTIONS_BT,
+        # Row 0: Back Thought button
+        bt_button = discord.ui.Button(
+            label="Back Thought",
+            style=discord.ButtonStyle.secondary,
             row=0
         )
-        select_bt.callback = self.bt_callback
-        self.add_item(select_bt)
+        bt_button.callback = self.bt_callback
+        self.add_item(bt_button)
 
         # Row 1: Group A
         select_a = discord.ui.Select(
@@ -180,8 +173,9 @@ class TranslateView(discord.ui.View):
 
     def _build_display(self):
         display = []
+        # Ensures "Reveals the Hidden Truth" always comes first if selected
         if "TRUTH" in self.selected_values:
-            display.append("🔎 Back Thought")
+            display.append("🔎 Reveals the Hidden Truth")
         for v in self.selected_values:
             if v != "TRUTH":
                 display.append(f"{v} {LANG_EMOJIS[v]}")
@@ -193,43 +187,53 @@ class TranslateView(discord.ui.View):
 
     async def bt_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.invoker_id:
-            await interaction.response.send_message("❌ This panel is not yours.", ephemeral=True)
+            await interaction.response.send_message("❌ This panel does not belong to you.", ephemeral=True)
             return
-        if "TRUTH" not in self.selected_values:
+        if "TRUTH" in self.selected_values:
+            self.selected_values.remove("TRUTH")
+            for item in self.children:
+                if isinstance(item, discord.ui.Button) and item.label == "Back Thought":
+                    item.style = discord.ButtonStyle.secondary
+        else:
+            # Force TRUTH to be at the front of the list
             self.selected_values = ["TRUTH"] + [v for v in self.selected_values if v != "TRUTH"]
+            for item in self.children:
+                if isinstance(item, discord.ui.Button) and item.label == "Back Thought":
+                    item.style = discord.ButtonStyle.success
+                    
         await interaction.response.edit_message(
-            content=f"## [ \"TRANSLATER\". ] *\n**Message:** *{self.original_text[:80]}*\n\n**Selection:** {self._build_display()}\n\nConfirm with ✅",
+            content=f"## [ \"TRANSLATER\". ] *\n**Message :** *{self.original_text[:80]}*\n\n**Selection :** {self._build_display()}\n\nConfirm",
             view=self
         )
 
     async def selecta_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.invoker_id:
-            await interaction.response.send_message("❌ This panel is not yours.", ephemeral=True)
+            await interaction.response.send_message("❌ This panel does not belong to you.", ephemeral=True)
             return
         self._update_lang(interaction.data["values"][0], _SELECT_A_KEYS)
         await interaction.response.edit_message(
-            content=f"## [ \"TRANSLATER\". ] *\n**Message:** *{self.original_text[:80]}*\n\n**Selection:** {self._build_display()}\n\nConfirm with ✅",
+            content=f"## [ \"TRANSLATER\". ] *\n**Message :** *{self.original_text[:80]}*\n\n**Selection :** {self._build_display()}\n\nConfirm",
             view=self
         )
 
     async def selectb_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.invoker_id:
-            await interaction.response.send_message("❌ This panel is not yours.", ephemeral=True)
+            await interaction.response.send_message("❌ This panel does not belong to you.", ephemeral=True)
             return
         self._update_lang(interaction.data["values"][0], _SELECT_B_KEYS)
         await interaction.response.edit_message(
-            content=f"## [ \"TRANSLATER\". ] *\n**Message:** *{self.original_text[:80]}*\n\n**Selection:** {self._build_display()}\n\nConfirm with ✅",
+            content=f"## [ \"TRANSLATER\". ] *\n**Message :** *{self.original_text[:80]}*\n\n**Selection :** {self._build_display()}\n\nConfirm",
             view=self
         )
 
     @discord.ui.button(label="✅ Confirm", style=discord.ButtonStyle.success, row=3)
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.invoker_id:
-            await interaction.response.send_message("❌ This panel is not yours.", ephemeral=True)
+            await interaction.response.send_message("❌ This panel does not belong to you.", ephemeral=True)
             return
 
         if not self.selected_values:
-            await interaction.response.send_message("⚠️ Please select a language or Back Thought first!", ephemeral=True)
+            await interaction.response.send_message("⚠️ Please select at least one option first!", ephemeral=True)
             return
 
         await interaction.response.edit_message(content="⏳ Processing...", view=None)
@@ -294,7 +298,7 @@ class TranslateView(discord.ui.View):
     @discord.ui.button(label="❌ Cancel", style=discord.ButtonStyle.danger, row=3)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.invoker_id:
-            await interaction.response.send_message("❌ This panel is not yours.", ephemeral=True)
+            await interaction.response.send_message("❌ This panel does not belong to you.", ephemeral=True)
             return
         await interaction.response.edit_message(content="❌ Cancelled.", view=None)
         self.stop()
@@ -303,7 +307,7 @@ class TranslateView(discord.ui.View):
 @bot.tree.context_menu(name="TRANSLATER")
 async def translate_context_menu(interaction: discord.Interaction, message: discord.Message):
     if not message.content.strip():
-        await interaction.response.send_message("❌ This message contains no text.", ephemeral=True)
+        await interaction.response.send_message("Ce Message n'est pas Compatible avec l'Application [ \"TRANSLATER\". ] *", ephemeral=True)
         return
 
     view = TranslateView(
@@ -313,7 +317,7 @@ async def translate_context_menu(interaction: discord.Interaction, message: disc
     )
 
     await interaction.response.send_message(
-        f"## [ \"TRANSLATER\". ] *\n**Message:** *{message.content[:80]}{'...' if len(message.content) > 80 else ''}*\n\nChoose a language or Back Thought, then confirm with ✅",
+        f"## [ \"TRANSLATER\". ] *\n**Message :** *{message.content[:80]}{'...' if len(message.content) > 80 else ''}*\n\nSelect at least one option, then confirm",
         view=view,
         ephemeral=True
     )
@@ -331,4 +335,4 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
-        
+    
