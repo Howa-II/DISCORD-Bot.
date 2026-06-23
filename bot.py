@@ -313,5 +313,34 @@ class TranslateView(discord.ui.View):
 
 
 @bot.tree.context_menu(name="TRANSLATER")
-async def translate_context_menu(interaction: discord.
-                                 
+async def translate_context_menu(interaction: discord.Interaction, message: discord.Message):
+    if not message.content.strip():
+        await interaction.response.send_message("❌ This Message is Not Compatible with the Application [ \"TRANSLATER\". ] *", ephemeral=True)
+        return
+
+    view = TranslateView(
+        original_text=message.content,
+        message_ref=message,
+        invoker_id=interaction.user.id
+    )
+
+    await interaction.response.send_message(
+        f"## [ \"TRANSLATER\". ] *\n**Message :** *{message.content[:80]}{'...' if len(message.content) > 80 else ''}*\n\nSelect at least one Option, then Confirm",
+        view=view,
+        ephemeral=True
+    )
+
+
+@bot.event
+async def on_ready():
+    try:
+        synced = await bot.tree.sync()
+        print(f"✅ {len(synced)} command(s) synced")
+    except Exception as e:
+        print(f"❌ Sync error: {e}")
+    print(f"✅ Bot connected: {bot.user} (ID: {bot.user.id})")
+
+
+if __name__ == "__main__":
+    bot.run(DISCORD_TOKEN)
+    
