@@ -234,7 +234,7 @@ class TranslateView(discord.ui.View):
             await interaction.response.send_message("⚠️ Please Select at least one Option first", ephemeral=True)
             return
 
-        # Passe le menu en état de chargement
+        # Passe le menu privé en état de chargement
         await interaction.response.edit_message(content="⏳ Processing . . .", view=None)
         self.stop()
 
@@ -244,7 +244,7 @@ class TranslateView(discord.ui.View):
         translator = interaction.user.mention
 
         try:
-            # Le bot va d'abord exécuter l'appel API à l'IA
+            # Exécution de l'IA
             if not has_truth and len(lang_values) == 1:
                 target_lang = LANG_EMOJIS[lang_values[0]]
                 source_lang, result_text = process_translation(self.original_text, target_lang, "translate")
@@ -288,19 +288,18 @@ class TranslateView(discord.ui.View):
                 await self.message_ref.reply("❌ Invalid Combination")
                 return
 
-            # --- SI ET SEULEMENT SI L'IA A MARCHÉ JUSQU'ICI ---
+            # --- SUCCÈS : ENVOI DES MESSAGES ---
             
-            # 1er message : Validation publique de succès
+            # 1er message public : Unique message "Done ! ✅" dans le salon
             await self.message_ref.reply("Done ! ✅")
             
-            # 2nd message : Envoi de la traduction
+            # 2nd message public : La traduction juste après
             await self.message_ref.reply(reply)
             
-            # Fermeture propre du volet éphémère privé
-            await interaction.edit_original_response(content="Done ! ✅")
+            # Fermeture du volet privé en modifiant le texte (pas de doublon "Done !")
+            await interaction.edit_original_response(content="✅ Panel Closed")
 
         except Exception as e:
-            # En cas de crash de l'IA, le Done ! n'est pas envoyé, seul un message d'erreur est visible
             await self.message_ref.reply(f"❌ Error: {str(e)}")
 
     @discord.ui.button(label="❌ Cancel", style=discord.ButtonStyle.danger, row=3)
@@ -343,4 +342,3 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
-    
