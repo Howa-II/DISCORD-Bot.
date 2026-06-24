@@ -50,7 +50,7 @@ LANG_EMOJIS = {
     "🇰🇷": "Korean",
     "🇱🇧": "Lebanese Arabic",
     "🇱🇾": "Libyan Arabic",
-    "🇩🇿": "Maghrebi dialect",
+    "🇩🇿": "Maghrebi Dialect",
     "🇲🇾": "Malay",
     "🇲🇽": "Mexican Spanish",
     "🇳🇴": "Norwegian",
