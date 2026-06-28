@@ -135,15 +135,16 @@ def format_reply_with_emoji(emoji: str, content: str, suffix: str = "") -> str:
     """Formate la réponse pour mobile : saute la ligne si (Drapeau + Espace + Message) dépasse 40 car."""
     cleaned_content = content.strip()
     
-    # Simulation du bloc complet (Drapeau + Espace + Message) sur une ligne
+    # Simulation du bloc complet (Drapeau + Espace + Message) sur une seule ligne
     inline_test = f"{emoji} {cleaned_content}"
     
-    # Seuil fixé à 40 caractères max pour éviter les retours à la ligne moches sur smartphone
+    # Si le texte contient déjà un saut de ligne ou si l'ensemble dépasse 40 caractères
     if "\n" in cleaned_content or len(inline_test) > 40:
         main_body = f"{emoji}\n{cleaned_content}"
     else:
         main_body = inline_test
         
+    # Le suffixe (Translated by / Revealed by) se retrouve TOUJOURS à la ligne
     if suffix:
         return f"{main_body}\n{suffix}"
     return main_body
@@ -245,7 +246,7 @@ class TranslateView(discord.ui.View):
             return
 
         if not self.selected_values:
-            # Formatage avec le warning isolé sur sa propre ligne
+            # Règle : Émoji ⚠️ tout seul sur sa première ligne
             await interaction.response.send_message("⚠️\nPlease,\nSelect at least one Option first", ephemeral=True)
             return
 
@@ -307,8 +308,8 @@ class TranslateView(discord.ui.View):
             await interaction.edit_original_response(content="DONE ! ✅")
 
         except Exception as e:
-            # Formatage de l'erreur avec le warning isolé sur sa ligne
-            err_msg = "⚠️\nPlease,\nTry Again"
+            # Règle : Exception affichée sur une seule ligne
+            err_msg = "⚠️ Please, Try Again"
             await self.message_ref.reply(err_msg)
             try:
                 await interaction.edit_original_response(content=err_msg)
@@ -355,4 +356,3 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
-    
