@@ -50,7 +50,7 @@ LANG_EMOJIS = {
     "🇰🇷": "Korean",
     "🇱🇧": "Lebanese Arabic",
     "🇱🇾": "Libyan Arabic",
-    "🇩🇿": "Maghrebi Dialect",
+    "🇩🇿": "Maghrebi dialect",
     "🇲🇾": "Malay",
     "🇲🇽": "Mexican Spanish",
     "🇳🇴": "Norwegian",
@@ -290,14 +290,14 @@ class TranslateView(discord.ui.View):
 
             # --- SUCCÈS : ENVOI DES MESSAGES ---
             
-            # 1er message public : Unique message "Done ! ✅" dans le salon
-            await self.message_ref.reply("Done ! ✅")
+            # 1er message public dans le salon
+            await self.message_ref.reply("DONE ! ✅")
             
             # 2nd message public : La traduction juste après
             await self.message_ref.reply(reply)
             
-            # Remet également le message "Done ! ✅" sur le volet éphémère privé de l'utilisateur
-            await interaction.edit_original_response(content="Done ! ✅")
+            # Message éphémère privé de l'utilisateur
+            await interaction.edit_original_response(content="DONE ! ✅")
 
         except Exception as e:
             await self.message_ref.reply(f"❌ Error: {str(e)}")
@@ -342,4 +342,4 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
-            
+        
