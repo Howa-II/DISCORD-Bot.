@@ -73,23 +73,18 @@ LANG_EMOJIS = {
 }
 
 LANG_TO_EMOJI = {v: k for k, v in LANG_EMOJIS.items()}
-
 _all_langs = list(LANG_EMOJIS.items())
-
 _OPTIONS_A = [discord.SelectOption(label=f"{e} {l}", value=e) for e, l in _all_langs[:25]]
 _OPTIONS_B = [discord.SelectOption(label=f"{e} {l}", value=e) for e, l in _all_langs[25:]]
-
 _SELECT_A_KEYS = set(e for e, _ in _all_langs[:25])
 _SELECT_B_KEYS = set(e for e, _ in _all_langs[25:])
 
 intents = discord.Intents.default()
 intents.message_content = True
-
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
 def process_translation(text: str, target_lang: str | None, mode: str) -> tuple[str, str, str]:
-    """Retourne (source_lang, result_text, international_alphabet)"""
     supported = ", ".join(LANG_EMOJIS.values())
     
     tifinagh_rule = ""
@@ -100,7 +95,7 @@ def process_translation(text: str, target_lang: str | None, mode: str) -> tuple[
         prompt = (
             f"Do three things at once:\n"
             f"1. Detect the language of this text from this list ONLY: {supported}. If not in list, write UNKNOWN.\n"
-            f"2. Translate the text to {target_lang}. CRITICAL: You MUST write the translation using the native script, alphabet, and writing system of {target_lang} (e.g., use Arabic script for Arabic, Kanji/Kana for Japanese, Cyrillic for Russian, etc.). Do not transliterate into the Roman alphabet.{tifinagh_rule}\n"
+            f"2. Translate the text to {target_lang}. CRITICAL: You MUST write the translation using the native script, alphabet, and writing system of {target_lang}. Do not transliterate into the Roman alphabet.{tifinagh_rule}\n"
             f"3. Provide the phonetic transliteration (Romanization / International Alphabet) of the translated text so a non-native speaker can pronounce it. If {target_lang} already uses the standard Latin alphabet, just repeat the translation exactly.\n\n"
             f"Reply in this exact format (3 lines only):\n"
             f"LANG: <detected language>\n"
@@ -112,7 +107,7 @@ def process_translation(text: str, target_lang: str | None, mode: str) -> tuple[
         lang_instruction = f"in {target_lang}" if target_lang else "in the same language as the original text"
         script_instruction = f"using the native script/alphabet of {target_lang}" if target_lang else "using the native script/alphabet of the original text"
         if target_lang and "ⵜⴰⵎⴰⵣⵉⵖⵜ" in target_lang:
-            script_instruction = "exclusively using the Neo-Tifinagh alphabet (ⵜⵉⴼⵉⵏⴰⵖ)"
+            script_instruction = "exclusively using the Neo-Tifinagh alphabet (ⵜⵉⴼⵉⵏ原ⵖ)"
             
         prompt = (
             f"Do two things at once:\n"
@@ -146,16 +141,20 @@ def process_translation(text: str, target_lang: str | None, mode: str) -> tuple[
 
 
 def format_reply_with_emoji(emoji: str, content: str, inter_text: str = "", suffix: str = "") -> str:
-    """Formate la réponse pour mobile : saute la ligne si (Emoji + Espace + Message) dépasse 40 car."""
+    """
+    Formate la réponse en respectant strictement la règle du saut de ligne.
+    Si le texte dépasse 40 caractères, l'émoji reste seul sur sa ligne.
+    """
     cleaned_content = content.strip()
     
+    # Règle du saut de ligne pour le message principal
     inline_test = f"{emoji} {cleaned_content}"
     if "\n" in cleaned_content or len(inline_test) > 40:
         main_body = f"{emoji}\n{cleaned_content}"
     else:
         main_body = inline_test
         
-    # Ajout de la section Alphabet International si elle existe
+    # Règle du saut de ligne pour l'Alphabet International
     if inter_text:
         cleaned_inter = inter_text.strip()
         inline_inter_test = f"🌐 {cleaned_inter}"
@@ -177,31 +176,15 @@ class TranslateView(discord.ui.View):
         self.invoker_id = invoker_id
         self.selected_values = []
 
-        bt_button = discord.ui.Button(
-            label="Back Thought",
-            style=discord.ButtonStyle.secondary,
-            row=0
-        )
+        bt_button = discord.ui.Button(label="Back Thought", style=discord.ButtonStyle.secondary, row=0)
         bt_button.callback = self.bt_callback
         self.add_item(bt_button)
 
-        select_a = discord.ui.Select(
-            placeholder="Group A",
-            min_values=1,
-            max_values=1,
-            options=_OPTIONS_A,
-            row=1
-        )
+        select_a = discord.ui.Select(placeholder="Group A", min_values=1, max_values=1, options=_OPTIONS_A, row=1)
         select_a.callback = self.selecta_callback
         self.add_item(select_a)
 
-        select_b = discord.ui.Select(
-            placeholder="Group B",
-            min_values=1,
-            max_values=1,
-            options=_OPTIONS_B,
-            row=2
-        )
+        select_b = discord.ui.Select(placeholder="Group B", min_values=1, max_values=1, options=_OPTIONS_B, row=2)
         select_b.callback = self.selectb_callback
         self.add_item(select_b)
 
@@ -292,7 +275,6 @@ class TranslateView(discord.ui.View):
                     reply = format_reply_with_emoji(source_emoji, result_text, inter_text=inter_text, suffix=f"Translated by {translator}")
 
             elif has_truth and len(lang_values) == 0:
-                # Mode Back Thought seul : Pas d'alphabet international
                 source_lang, result_text, _ = process_translation(self.original_text, None, "truth")
 
                 if source_lang is None:
@@ -349,12 +331,7 @@ async def translate_context_menu(interaction: discord.Interaction, message: disc
         await interaction.response.send_message("❌ This Message is Not Compatible with the Application [ \"TRANSLATER\". ] *", ephemeral=True)
         return
 
-    view = TranslateView(
-        original_text=message.content,
-        message_ref=message,
-        invoker_id=interaction.user.id
-    )
-
+    view = TranslateView(original_text=message.content, message_ref=message, invoker_id=interaction.user.id)
     await interaction.response.send_message(
         f"## [ \"TRANSLATER\". ] *\n**Message :** *{message.content[:80]}{'...' if len(message.content) > 80 else ''}*\n\nSelect at least one Option, then Confirm",
         view=view,
@@ -365,13 +342,13 @@ async def translate_context_menu(interaction: discord.Interaction, message: disc
 @bot.event
 async def on_ready():
     try:
-        synced = await bot.tree.sync()
-        print(f"✅ {len(synced)} command(s) synced")
+        await bot.tree.sync()
+        print("✅ Command(s) synced")
     except Exception as e:
         print(f"❌ Sync error: {e}")
-    print(f"✅ Bot connected: {bot.user} (ID: {bot.user.id})")
+    print(f"✅ Bot connected: {bot.user}")
 
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
-        
+            
