@@ -21,55 +21,55 @@ def generate(prompt):
 
 LANG_EMOJIS = {
     "🇺🇸": "American English",
-    "🇲🇦": "Amazigh",
-    "🇸🇦": "Arabic",
+    "🇲🇦": "ⵜⴰⵎⴰⵣⵉⵖⵜ",
+    "🇸🇦": "العربية",
     "🇦🇺": "Australian English",
-    "🇧🇷": "Brazilian Portuguese",
+    "🇧🇷": "Português Brasileiro",
     "🇬🇧": "British English",
-    "🇧🇬": "Bulgarian",
-    "🇨🇳": "Chinese",
-    "🇭🇷": "Croatian",
-    "🇨🇿": "Czech",
-    "🇩🇰": "Danish",
-    "🇳🇱": "Dutch",
-    "🇪🇬": "Egyptian Arabic",
-    "🇫🇮": "Finnish",
-    "🇫🇷": "French",
-    "🇩🇪": "German",
-    "🇬🇷": "Greek",
-    "🇵🇸": "Hebrew",
-    "🇮🇳": "Hindi",
-    "🇭🇺": "Hungarian",
-    "🇮🇸": "Icelandic",
-    "🇮🇩": "Indonesian",
-    "🇮🇶": "Iraqi Arabic",
-    "🇮🇪": "Irish",
-    "🇮🇹": "Italian",
-    "🇯🇵": "Japanese",
+    "🇧🇬": "Български",
+    "🇨🇳": "简体中文",
+    "🇭🇷": "Hrvatski",
+    "🇨🇿": "Čeština",
+    "🇩🇰": "Dansk",
+    "🇳🇱": "Nederlands",
+    "🇪🇬": "العربية المصرية",
+    "🇫🇮": "Suomi",
+    "🇫🇷": "Français",
+    "🇩🇪": "Deutsch",
+    "🇬🇷": "Ελληνικά",
+    "🇵🇸": "עברית",
+    "🇮🇳": "हिन्दी",
+    "🇭🇺": "Magyar",
+    "🇮🇸": "Íslenska",
+    "🇮🇩": "Bahasa Indonesia",
+    "🇮🇶": "العربية العراقية",
+    "🇮🇪": "Gaeilge",
+    "🇮🇹": "Italiano",
+    "🇯🇵": "日本語",
     "🇬🇱": "Kalaallisut",
-    "🇰🇷": "Korean",
-    "🇱🇧": "Lebanese Arabic",
-    "🇱🇾": "Libyan Arabic",
-    "🇩🇿": "Maghrebi dialect",
-    "🇲🇾": "Malay",
-    "🇲🇽": "Mexican Spanish",
-    "🇳🇴": "Norwegian",
-    "🇮🇷": "Persian",
-    "🇵🇱": "Polish",
-    "🇵🇹": "Portuguese",
-    "🇨🇦": "Quebec French",
-    "🇷🇴": "Romanian",
-    "🇷🇺": "Russian",
-    "🇷🇸": "Serbian",
-    "🇪🇸": "Spanish",
-    "🇸🇩": "Sudanese Arabic",
-    "🇸🇪": "Swedish",
+    "🇰🇷": "한국어",
+    "🇱🇧": "العربية اللبنانية",
+    "🇱🇾": "العربية الليبية",
+    "🇩🇿": "الدارجة المغربية",
+    "🇲🇾": "Bahasa Melayu",
+    "🇲🇽": "Español Mexicano",
+    "🇳🇴": "Norsk",
+    "🇮🇷": "فارسی",
+    "🇵🇱": "Polski",
+    "🇵🇹": "Português",
+    "🇨🇦": "Français Québécois",
+    "🇷🇴": "Română",
+    "🇷🇺": "Русский",
+    "🇷🇸": "Српски",
+    "🇪🇸": "Español",
+    "🇸🇩": "العربية السودانية",
+    "🇸🇪": "Svenska",
     "🇵🇭": "Tagalog",
-    "🇹🇭": "Thai",
-    "🇹🇷": "Turkish",
-    "🇺🇦": "Ukrainian",
-    "🇵🇰": "Urdu",
-    "🇻🇳": "Vietnamese",
+    "🇹🇭": "ไทย",
+    "🇹🇷": "Türkçe",
+    "🇺🇦": "Українська",
+    "🇵🇰": "اردو",
+    "🇻🇳": "Tiếng Việt",
 }
 
 LANG_TO_EMOJI = {v: k for k, v in LANG_EMOJIS.items()}
@@ -88,25 +88,36 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
-def process_translation(text: str, target_lang: str | None, mode: str) -> tuple[str, str]:
+def process_translation(text: str, target_lang: str | None, mode: str) -> tuple[str, str, str]:
+    """Retourne (source_lang, result_text, international_alphabet)"""
     supported = ", ".join(LANG_EMOJIS.values())
+    
+    tifinagh_rule = ""
+    if target_lang and "ⵜⴰⵎⴰⵣⵉⵖⵜ" in target_lang:
+        tifinagh_rule = " CRITICAL FOR TAMAZIGHT: You MUST write the translation exclusively using the Neo-Tifinagh alphabet (ⵜⵉⴼⵉⵏⴰⵖ). Do not use Latin or Arabic characters for this language."
 
     if mode == "translate" and target_lang:
         prompt = (
-            f"Do two things at once:\n"
+            f"Do three things at once:\n"
             f"1. Detect the language of this text from this list ONLY: {supported}. If not in list, write UNKNOWN.\n"
-            f"2. Translate the text to {target_lang}.\n\n"
-            f"Reply in this exact format (2 lines only):\n"
+            f"2. Translate the text to {target_lang}. CRITICAL: You MUST write the translation using the native script, alphabet, and writing system of {target_lang} (e.g., use Arabic script for Arabic, Kanji/Kana for Japanese, Cyrillic for Russian, etc.). Do not transliterate into the Roman alphabet.{tifinagh_rule}\n"
+            f"3. Provide the phonetic transliteration (Romanization / International Alphabet) of the translated text so a non-native speaker can pronounce it. If {target_lang} already uses the standard Latin alphabet, just repeat the translation exactly.\n\n"
+            f"Reply in this exact format (3 lines only):\n"
             f"LANG: <detected language>\n"
-            f"RESULT: <translation>\n\n"
+            f"RESULT: <translation>\n"
+            f"INTER: <international alphabet / romanization>\n\n"
             f"Text: {text}"
         )
     else:
         lang_instruction = f"in {target_lang}" if target_lang else "in the same language as the original text"
+        script_instruction = f"using the native script/alphabet of {target_lang}" if target_lang else "using the native script/alphabet of the original text"
+        if target_lang and "ⵜⴰⵎⴰⵣⵉⵖⵜ" in target_lang:
+            script_instruction = "exclusively using the Neo-Tifinagh alphabet (ⵜⵉⴼⵉⵏⴰⵖ)"
+            
         prompt = (
             f"Do two things at once:\n"
             f"1. Detect the language of this text from this list ONLY: {supported}. If not in list, write UNKNOWN.\n"
-            f"2. As a humorous Discord bot, reveal the hidden true meaning of this message based on Discord/gaming clichés. Reply {lang_instruction}, short and funny.\n\n"
+            f"2. As a humorous Discord bot, reveal the hidden true meaning of this message based on Discord/gaming clichés. Reply {lang_instruction}, short and funny. CRITICAL: You MUST write the result {script_instruction}.\n\n"
             f"Reply in this exact format (2 lines only):\n"
             f"LANG: <detected language>\n"
             f"RESULT: <hidden truth>\n\n"
@@ -117,6 +128,7 @@ def process_translation(text: str, target_lang: str | None, mode: str) -> tuple[
     lines = response_text.strip().split("\n")
     source_lang = None
     result = ""
+    international = ""
 
     for line in lines:
         if line.startswith("LANG:"):
@@ -127,24 +139,31 @@ def process_translation(text: str, target_lang: str | None, mode: str) -> tuple[
                     break
         elif line.startswith("RESULT:"):
             result = line.replace("RESULT:", "").strip()
+        elif line.startswith("INTER:"):
+            international = line.replace("INTER:", "").strip()
 
-    return source_lang, result
+    return source_lang, result, international
 
 
-def format_reply_with_emoji(emoji: str, content: str, suffix: str = "") -> str:
-    """Formate la réponse pour mobile : saute la ligne si (Drapeau + Espace + Message) dépasse 40 car."""
+def format_reply_with_emoji(emoji: str, content: str, inter_text: str = "", suffix: str = "") -> str:
+    """Formate la réponse pour mobile : saute la ligne si (Emoji + Espace + Message) dépasse 40 car."""
     cleaned_content = content.strip()
     
-    # Simulation du bloc complet (Drapeau + Espace + Message) sur une seule ligne
     inline_test = f"{emoji} {cleaned_content}"
-    
-    # Si le texte contient déjà un saut de ligne ou si l'ensemble dépasse 40 caractères
     if "\n" in cleaned_content or len(inline_test) > 40:
         main_body = f"{emoji}\n{cleaned_content}"
     else:
         main_body = inline_test
         
-    # Le suffixe (Translated by / Revealed by) se retrouve TOUJOURS à la ligne
+    # Ajout de la section Alphabet International si elle existe
+    if inter_text:
+        cleaned_inter = inter_text.strip()
+        inline_inter_test = f"🌐 {cleaned_inter}"
+        if len(inline_inter_test) > 40:
+            main_body += f"\n🌐\n{cleaned_inter}"
+        else:
+            main_body += f"\n🌐 {cleaned_inter}"
+        
     if suffix:
         return f"{main_body}\n{suffix}"
     return main_body
@@ -246,8 +265,7 @@ class TranslateView(discord.ui.View):
             return
 
         if not self.selected_values:
-            # Règle : Émoji ⚠️ tout seul sur sa première ligne
-            await interaction.response.send_message("⚠️\nPlease,\nSelect At Least One Option first", ephemeral=True)
+            await interaction.response.send_message("⚠️\nPlease,\nSelect at least one Option first", ephemeral=True)
             return
 
         await interaction.response.edit_message(content="⏳ Processing . . .", view=None)
@@ -261,7 +279,7 @@ class TranslateView(discord.ui.View):
         try:
             if not has_truth and len(lang_values) == 1:
                 target_lang = LANG_EMOJIS[lang_values[0]]
-                source_lang, result_text = process_translation(self.original_text, target_lang, "translate")
+                source_lang, result_text, inter_text = process_translation(self.original_text, target_lang, "translate")
 
                 if source_lang is None:
                     await self.message_ref.reply("❌ Language Not Enregistered")
@@ -269,12 +287,13 @@ class TranslateView(discord.ui.View):
 
                 source_emoji = LANG_TO_EMOJI.get(source_lang, "🏳️")
                 if source_lang == target_lang:
-                    reply = format_reply_with_emoji(source_emoji, f"*(Already in {source_lang}.)*", translator)
+                    reply = format_reply_with_emoji(source_emoji, f"*(Already in {source_lang}.)*", suffix=translator)
                 else:
-                    reply = format_reply_with_emoji(source_emoji, result_text, f"Translated by {translator}")
+                    reply = format_reply_with_emoji(source_emoji, result_text, inter_text=inter_text, suffix=f"Translated by {translator}")
 
             elif has_truth and len(lang_values) == 0:
-                source_lang, result_text = process_translation(self.original_text, None, "truth")
+                # Mode Back Thought seul : Pas d'alphabet international
+                source_lang, result_text, _ = process_translation(self.original_text, None, "truth")
 
                 if source_lang is None:
                     await self.message_ref.reply("❌ Language Not Enregistered")
@@ -284,7 +303,7 @@ class TranslateView(discord.ui.View):
 
             elif has_truth and len(lang_values) == 1:
                 target_lang = LANG_EMOJIS[lang_values[0]]
-                source_lang, truth_text = process_translation(self.original_text, None, "truth")
+                source_lang, truth_text, _ = process_translation(self.original_text, None, "truth")
 
                 if source_lang is None:
                     await self.message_ref.reply("❌ Language Not Enregistered")
@@ -294,10 +313,10 @@ class TranslateView(discord.ui.View):
 
                 if source_lang == target_lang:
                     combined_text = f"*(Already in {target_lang}.)*\n\n{truth_text}"
-                    reply = format_reply_with_emoji(source_emoji, combined_text, f"Revealed by {translator}")
+                    reply = format_reply_with_emoji(source_emoji, combined_text, suffix=f"Revealed by {translator}")
                 else:
-                    _, translated_truth = process_translation(truth_text, target_lang, "translate")
-                    reply = format_reply_with_emoji(source_emoji, translated_truth, f"Revealed and Translated by {translator}")
+                    _, translated_truth, inter_text = process_translation(truth_text, target_lang, "translate")
+                    reply = format_reply_with_emoji(source_emoji, translated_truth, inter_text=inter_text, suffix=f"Revealed and Translated by {translator}")
 
             else:
                 await self.message_ref.reply("❌ Invalid Combination")
@@ -308,7 +327,6 @@ class TranslateView(discord.ui.View):
             await interaction.edit_original_response(content="DONE ! ✅")
 
         except Exception as e:
-            # Règle : Exception affichée sur une seule ligne
             err_msg = "⚠️ Please, Try Again"
             await self.message_ref.reply(err_msg)
             try:
@@ -356,3 +374,4 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
+        
