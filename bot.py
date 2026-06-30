@@ -24,7 +24,7 @@ LANG_EMOJIS = {
     "🇲🇦": "ⵜⴰⵎⴰⵣⵉⵖⵜ",
     "🇸🇦": "العربية",
     "🇦🇺": "Australian English",
-    "🇧🇷": "Português Brasileiro",
+    "🇧🇷": "Português brasileiro",
     "🇬🇧": "British English",
     "🇧🇬": "Български",
     "🇨🇳": "简体中文",
@@ -32,7 +32,7 @@ LANG_EMOJIS = {
     "🇨🇿": "Čeština",
     "🇩🇰": "Dansk",
     "🇳🇱": "Nederlands",
-    "🇪🇬": "اللهجة المصرية",
+    "🇪🇬": "العربية المصرية",
     "🇫🇮": "Suomi",
     "🇫🇷": "Français",
     "🇩🇪": "Deutsch",
@@ -52,17 +52,17 @@ LANG_EMOJIS = {
     "🇱🇾": "اللهجة الليبية",
     "🇩🇿": "الدارجة المغربية",
     "🇲🇾": "Bahasa Melayu",
-    "🇲🇽": "Español Mexicano",
+    "🇲🇽": "Español mexicano",
     "🇳🇴": "Norsk",
     "🇮🇷": "فارسی",
     "🇵🇱": "Polski",
     "🇵🇹": "Português",
-    "🇨🇦": "Français Québécois",
+    "🇨🇦": "Français québécois",
     "🇷🇴": "Română",
     "🇷🇺": "Русский",
     "🇷🇸": "Српски",
     "🇪🇸": "Español",
-    "🇸🇩": "العربية السودانية",
+    "🇸🇩": "اللهجة السودانية",
     "🇸🇪": "Svenska",
     "🇵🇭": "Tagalog",
     "🇹🇭": "ไทย",
@@ -107,7 +107,7 @@ def process_translation(text: str, target_lang: str | None, mode: str) -> tuple[
         lang_instruction = f"in {target_lang}" if target_lang else "in the same language as the original text"
         script_instruction = f"using the native script/alphabet of {target_lang}" if target_lang else "using the native script/alphabet of the original text"
         if target_lang and "ⵜⴰⵎⴰⵣⵉⵖⵜ" in target_lang:
-            script_instruction = "exclusively using the Neo-Tifinagh alphabet (ⵜⵉⴼⵉⵏ原ⵖ)"
+            script_instruction = "exclusively using the Neo-Tifinagh alphabet (ⵜⵉⴼⵉⵏⴰⵖ)"
             
         prompt = (
             f"Do two things at once:\n"
@@ -140,28 +140,33 @@ def process_translation(text: str, target_lang: str | None, mode: str) -> tuple[
     return source_lang, result, international
 
 
-def format_reply_with_emoji(emoji: str, content: str, inter_text: str = "", suffix: str = "") -> str:
+def format_reply_with_emoji(emoji: str, content: str, inter_text: str = "", suffix: str = "", require_inter: bool = False) -> str:
     """
-    Formate la réponse en respectant strictement la règle du saut de ligne.
-    Si le texte dépasse 40 caractères, l'émoji reste seul sur sa ligne.
+    Formate la réponse brute.
+    Si require_inter est True et que inter_text est vide (bug Gemini), remplace par un message d'erreur.
     """
     cleaned_content = content.strip()
     
-    # Règle du saut de ligne pour le message principal
+    # Règle de structure pour le message principal
     inline_test = f"{emoji} {cleaned_content}"
     if "\n" in cleaned_content or len(inline_test) > 40:
         main_body = f"{emoji}\n{cleaned_content}"
     else:
         main_body = inline_test
         
-    # Règle du saut de ligne pour l'Alphabet International
-    if inter_text:
+    # Gestion de l'alphabet international / translittération
+    if require_inter:
         cleaned_inter = inter_text.strip()
-        inline_inter_test = f"🌐 {cleaned_inter}"
-        if len(inline_inter_test) > 40:
-            main_body += f"\n🌐\n{cleaned_inter}"
+        
+        # Sécurité : Si Gemini a renvoyé du vide pour INTER
+        if not cleaned_inter:
+            main_body += "\n⚠️ Please, Try Again"
         else:
-            main_body += f"\n🌐 {cleaned_inter}"
+            inline_inter_test = f"🌐 {cleaned_inter}"
+            if len(inline_inter_test) > 40:
+                main_body += f"\n🌐\n{cleaned_inter}"
+            else:
+                main_body += f"\n🌐 {cleaned_inter}"
         
     if suffix:
         return f"{main_body}\n{suffix}"
@@ -270,9 +275,9 @@ class TranslateView(discord.ui.View):
 
                 source_emoji = LANG_TO_EMOJI.get(source_lang, "🏳️")
                 if source_lang == target_lang:
-                    reply = format_reply_with_emoji(source_emoji, f"*(Already in {source_lang}.)*", suffix=translator)
+                    reply = format_reply_with_emoji(source_emoji, f"*(Already in {source_lang}.)*", suffix=translator, require_inter=False)
                 else:
-                    reply = format_reply_with_emoji(source_emoji, result_text, inter_text=inter_text, suffix=f"Translated by {translator}")
+                    reply = format_reply_with_emoji(source_emoji, result_text, inter_text=inter_text, suffix=f"Translated by {translator}", require_inter=True)
 
             elif has_truth and len(lang_values) == 0:
                 source_lang, result_text, _ = process_translation(self.original_text, None, "truth")
@@ -295,10 +300,10 @@ class TranslateView(discord.ui.View):
 
                 if source_lang == target_lang:
                     combined_text = f"*(Already in {target_lang}.)*\n\n{truth_text}"
-                    reply = format_reply_with_emoji(source_emoji, combined_text, suffix=f"Revealed by {translator}")
+                    reply = format_reply_with_emoji(source_emoji, combined_text, suffix=f"Revealed by {translator}", require_inter=False)
                 else:
                     _, translated_truth, inter_text = process_translation(truth_text, target_lang, "translate")
-                    reply = format_reply_with_emoji(source_emoji, translated_truth, inter_text=inter_text, suffix=f"Revealed and Translated by {translator}")
+                    reply = format_reply_with_emoji(source_emoji, translated_truth, inter_text=inter_text, suffix=f"Revealed and Translated by {translator}", require_inter=True)
 
             else:
                 await self.message_ref.reply("❌ Invalid Combination")
@@ -351,4 +356,4 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
-            
+    
