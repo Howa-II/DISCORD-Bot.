@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from google import genai
-from google.genai.errors import APIError # Pour attraper l'erreur de quota
+from google.genai.errors import APIError
 import os
 import asyncio
 from dotenv import load_dotenv
@@ -23,54 +23,54 @@ def generate(prompt):
 LANG_EMOJIS = {
     "🇺🇸": "American English",
     "🇲🇦": "ⵜⴰⵎⴰⵣⵉⵖⵜ",
-    "🇸🇦": "العربية",
     "🇦🇺": "Australian English",
-    "🇧🇷": "Português Brasileiro",
-    "🇬🇧": "British English",
-    "🇧🇬": "Български",
-    "🇨🇳": "简体中文",
-    "🇭🇷": "Hrvatski",
-    "🇨🇿": "Čeština",
-    "🇩🇰": "Dansk",
-    "🇳🇱": "Nederlands",
-    "🇪🇬": "اللهجة المصرية",
-    "🇫🇮": "Suomi",
-    "🇫🇷": "Français",
-    "🇩🇪": "Deutsch",
-    "🇬🇷": "Ελληνικά",
-    "🇵🇸": "עברית",
-    "🇮🇳": "हिन्दी",
-    "🇭🇺": "Magyar",
-    "🇮🇸": "Íslenska",
     "🇮🇩": "Bahasa Indonesia",
-    "🇮🇶": "اللهجة العراقية",
-    "🇮🇪": "Gaeilge",
-    "🇮🇹": "Italiano",
-    "🇯🇵": "日本語",
-    "🇬🇱": "Kalaallisut",
-    "🇰🇷": "한국어",
-    "🇱🇧": "اللهجة اللبنانية",
-    "🇱🇾": "اللهجة الليبية",
-    "🇩🇿": "الدارجة المغربية",
     "🇲🇾": "Bahasa Melayu",
+    "🇬🇧": "British English",
+    "🇧🇷": "Português Brasileiro",
+    "🇨zechia": "Čeština", # Note corrective mineure pour la clé interne
+    "🇩🇰": "Dansk",
+    "🇩🇪": "Deutsch",
+    "🇪🇸": "Español",
     "🇲🇽": "Español Mexicano",
+    "🇫🇷": "Français",
+    "🇨🇦": "Français Québécois",
+    "🇮🇪": "Gaeilge",
+    "🇭🇷": "Hrvatski",
+    "🇮🇹": "Italiano",
+    "🇬🇱": "Kalaallisut",
+    "🇭🇺": "Magyar",
+    "🇳🇱": "Nederlands",
     "🇳🇴": "Norsk",
-    "🇮🇷": "فارسي",
     "🇵🇱": "Polski",
     "🇵🇹": "Português",
-    "🇨🇦": "Français Québécois",
     "🇷🇴": "Română",
-    "🇷🇺": "Русский",
-    "🇷🇸": "Српски",
-    "🇪🇸": "Español",
-    "🇸🇩": "اللهجة السودانية",
+    "🇫🇮": "Suomi",
     "🇸🇪": "Svenska",
     "🇵🇭": "Tagalog",
-    "🇹🇭": "ไทย",
-    "🇹🇷": "Türkçe",
-    "🇺🇦": "Українська",
-    "🇵🇰": "اردو",
     "🇻🇳": "Tiếng Việt",
+    "🇹🇷": "Türkçe",
+    "🇵🇰": "اردو",
+    "🇸🇦": "العربية",
+    "🇩🇿": "الدارجة المغربية",
+    "🇪🇬": "اللهجة المصرية",
+    "🇮🇶": "اللهجة العراقية",
+    "🇱🇧": "اللهجة اللبنانية",
+    "🇱🇾": "اللهجة الليبية",
+    "🇸🇩": "اللهجة السودانية",
+    "🇧🇬": "Български",
+    "🇷🇸": "Српски",
+    "🇺🇦": "Українська",
+    "🇷🇺": "Русский",
+    "🇵🇸": "עברית",
+    "🇮🇷": "فارسي",
+    "🇮🇳": "हिन्दी",
+    "🇹🇭": "ไทย",
+    "🇮🇸": "Íslenska",
+    "🇬🇷": "Ελληνικά",
+    "🇨🇳": "简体中文",
+    "🇯🇵": "日本語",
+    "🇰🇷": "한국어"
 }
 
 LANG_TO_EMOJI = {v: k for k, v in LANG_EMOJIS.items()}
@@ -204,13 +204,19 @@ class TranslateView(discord.ui.View):
 
     async def _send_current_state(self, interaction: discord.Interaction):
         display_str = self._build_display()
+        short_text = f"*{self.original_text[:80]}{'...' if len(self.original_text) > 80 else ''}*"
+        
+        # Création de l'embed avec la couleur FF0058
+        embed = discord.Embed(title='[ "TRANSLATER". ] *', color=0xFF0058)
+        embed.add_field(name="Message :", value=short_text, inline=False)
         
         if display_str is None:
-            content = f"## [ \"TRANSLATER\". ] *\n**Message :** *{self.original_text[:80]}{'...' if len(self.original_text) > 80 else ''}*\n\nPlease,\nSelect At Least one Option, then Confirm"
+            embed.description = "Please,\nSelect At Least one Option, then Confirm"
         else:
-            content = f"## [ \"TRANSLATER\". ] *\n**Message :** *{self.original_text[:80]}*\n\n**Selection :** {display_str}\n\nConfirm"
+            embed.add_field(name="Selection :", value=display_str, inline=False)
+            embed.description = "Confirm"
             
-        await interaction.response.edit_message(content=content, view=self)
+        await interaction.response.edit_message(embed=embed, view=self)
 
     async def bt_callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.invoker_id:
@@ -253,7 +259,7 @@ class TranslateView(discord.ui.View):
             await interaction.response.send_message("⚠️\nPlease,\nSelect at least one Option first", ephemeral=True)
             return
 
-        await interaction.response.edit_message(content="⏳ Processing . . .", view=None)
+        await interaction.response.edit_message(content="⏳ Processing . . .", embed=None, view=None)
         self.stop()
 
         values = self.selected_values
@@ -314,28 +320,25 @@ class TranslateView(discord.ui.View):
             await interaction.edit_original_response(content="DONE ! ✅")
 
         except APIError as api_err:
-            # Vérification si l'erreur provient d'un quota dépassé (Code 429 ou RESOURCE_EXHAUSTED)
             if api_err.code == 429 or "RESOURCE_EXHAUSTED" in str(api_err):
                 await interaction.followup.send("❌ ERROR", ephemeral=True)
-                await interaction.followup.send("⚠️ Please, your Plan Limit has been Reached", ephemeral=True)
+                await interaction.followup.send("⚠️\nYour Plan Limit has been Reached", ephemeral=True)
                 try:
                     await interaction.edit_original_response(content="❌ ERROR")
                 except Exception:
                     pass
                 return
 
-            # Autre erreur API standard
             await interaction.followup.send("❌ ERROR", ephemeral=True)
-            await interaction.followup.send("⚠️ Please, Try Again", ephemeral=True)
+            await interaction.followup.send("⚠️\nPlease,\nTry Again", ephemeral=True)
             try:
                 await interaction.edit_original_response(content="❌ ERROR")
             except Exception:
                 pass
 
         except Exception as e:
-            # Erreur globale de script
             await interaction.followup.send("❌ ERROR", ephemeral=True)
-            await interaction.followup.send("⚠️ Please, Try Again", ephemeral=True)
+            await interaction.followup.send("⚠️\nPlease,\nTry Again", ephemeral=True)
             try:
                 await interaction.edit_original_response(content="❌ ERROR")
             except Exception:
@@ -347,7 +350,7 @@ class TranslateView(discord.ui.View):
             await interaction.response.send_message("❌ This panel does not belong to you.", ephemeral=True)
             return
         
-        await interaction.response.edit_message(content="DONE ! ✅", view=None)
+        await interaction.response.edit_message(content="DONE ! ✅", embed=None, view=None)
         await interaction.followup.send("❌ Cancelled", ephemeral=True)
         self.stop()
 
@@ -359,8 +362,15 @@ async def translate_context_menu(interaction: discord.Interaction, message: disc
         return
 
     view = TranslateView(original_text=message.content, message_ref=message, invoker_id=interaction.user.id)
+    
+    # Création de l'embed initial avec la couleur FF0058
+    short_text = f"*{message.content[:80]}{'...' if len(message.content) > 80 else ''}*"
+    embed = discord.Embed(title='[ "TRANSLATER". ] *', color=0xFF0058)
+    embed.add_field(name="Message :", value=short_text, inline=False)
+    embed.description = "Please,\nSelect At Least one Option, then Confirm"
+
     await interaction.response.send_message(
-        f"## [ \"TRANSLATER\". ] *\n**Message :** *{message.content[:80]}{'...' if len(message.content) > 80 else ''}*\n\nPlease,\nSelect At Least one Option, then Confirm",
+        embed=embed,
         view=view,
         ephemeral=True
     )
@@ -378,4 +388,4 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
-        
+            
